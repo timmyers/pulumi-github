@@ -9,14 +9,20 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v29/github"
 )
 
 const (
-	ctxEtag    = "etag"
-	ctxId      = "id"
+	ctxEtag    = ctxEtagType("etag")
+	ctxId      = ctxIdType("id")
 	writeDelay = 1 * time.Second
 )
+
+// ctxIdType is used to avoid collisions between packages using context
+type ctxIdType string
+
+// ctxEtagType is used to avoid collisions between packages using context
+type ctxEtagType string
 
 // etagTransport allows saving API quota by passing previously stored Etag
 // available via context to request headers
@@ -45,7 +51,6 @@ func NewEtagTransport(rt http.RoundTripper) *etagTransport {
 type rateLimitTransport struct {
 	transport        http.RoundTripper
 	delayNextRequest bool
-	responseBody     []byte
 
 	m sync.Mutex
 }
@@ -95,7 +100,7 @@ func (rlt *rateLimitTransport) RoundTrip(req *http.Request) (*http.Response, err
 
 	if rlErr, ok := ghErr.(*github.RateLimitError); ok {
 		rlt.delayNextRequest = false
-		retryAfter := rlErr.Rate.Reset.Sub(time.Now())
+		retryAfter := time.Until(rlErr.Rate.Reset.Time)
 		log.Printf("[DEBUG] Rate limit %d reached, sleeping for %s (until %s) before retrying",
 			rlErr.Rate.Limit, retryAfter, time.Now().Add(retryAfter))
 		time.Sleep(retryAfter)
@@ -110,7 +115,7 @@ func (rlt *rateLimitTransport) RoundTrip(req *http.Request) (*http.Response, err
 
 func (rlt *rateLimitTransport) lock(req *http.Request) {
 	ctx := req.Context()
-	log.Printf("[TRACE] Aquiring lock for GitHub API request (%q)", ctx.Value(ctxId))
+	log.Printf("[TRACE] Acquiring lock for GitHub API request (%q)", ctx.Value(ctxId))
 	rlt.m.Lock()
 }
 

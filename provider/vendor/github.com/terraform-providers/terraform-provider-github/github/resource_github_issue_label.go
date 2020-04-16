@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/google/go-github/github"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/google/go-github/v29/github"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func resourceGithubIssueLabel() *schema.Resource {
@@ -60,6 +60,11 @@ func resourceGithubIssueLabel() *schema.Resource {
 // same function for two schema funcs.
 
 func resourceGithubIssueLabelCreateOrUpdate(d *schema.ResourceData, meta interface{}) error {
+	err := checkOrganization(meta)
+	if err != nil {
+		return err
+	}
+
 	client := meta.(*Organization).client
 	orgName := meta.(*Organization).name
 	repoName := d.Get("repository").(string)
@@ -75,10 +80,23 @@ func resourceGithubIssueLabelCreateOrUpdate(d *schema.ResourceData, meta interfa
 		ctx = context.WithValue(ctx, ctxId, d.Id())
 	}
 
+	// Pull out the original name. If we already have a resource, this is the
+	// parsed ID. If not, it's the value given to the resource.
+	var originalName string
+	if d.Id() == "" {
+		originalName = name
+	} else {
+		var err error
+		_, originalName, err = parseTwoPartID(d.Id(), "repository", "name")
+		if err != nil {
+			return err
+		}
+	}
+
 	log.Printf("[DEBUG] Querying label existence: %s (%s/%s)",
 		name, orgName, repoName)
 	existing, resp, err := client.Issues.GetLabel(ctx,
-		orgName, repoName, name)
+		orgName, repoName, originalName)
 	if err != nil && resp.StatusCode != http.StatusNotFound {
 		return err
 	}
@@ -96,7 +114,7 @@ func resourceGithubIssueLabelCreateOrUpdate(d *schema.ResourceData, meta interfa
 			originalName = name
 		} else {
 			var err error
-			_, originalName, err = parseTwoPartID(d.Id())
+			_, originalName, err = parseTwoPartID(d.Id(), "repository", "name")
 			if err != nil {
 				return err
 			}
@@ -130,8 +148,13 @@ func resourceGithubIssueLabelCreateOrUpdate(d *schema.ResourceData, meta interfa
 }
 
 func resourceGithubIssueLabelRead(d *schema.ResourceData, meta interface{}) error {
+	err := checkOrganization(meta)
+	if err != nil {
+		return err
+	}
+
 	client := meta.(*Organization).client
-	repoName, name, err := parseTwoPartID(d.Id())
+	repoName, name, err := parseTwoPartID(d.Id(), "repository", "name")
 	if err != nil {
 		return err
 	}
@@ -171,6 +194,11 @@ func resourceGithubIssueLabelRead(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourceGithubIssueLabelDelete(d *schema.ResourceData, meta interface{}) error {
+	err := checkOrganization(meta)
+	if err != nil {
+		return err
+	}
+
 	client := meta.(*Organization).client
 
 	orgName := meta.(*Organization).name
@@ -179,7 +207,7 @@ func resourceGithubIssueLabelDelete(d *schema.ResourceData, meta interface{}) er
 	ctx := context.WithValue(context.Background(), ctxId, d.Id())
 
 	log.Printf("[DEBUG] Deleting label: %s (%s/%s)", name, orgName, repoName)
-	_, err := client.Issues.DeleteLabel(ctx,
+	_, err = client.Issues.DeleteLabel(ctx,
 		orgName, repoName, name)
 	return err
 }

@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 func resourceGithubWebhookMigrateState(v int, is *terraform.InstanceState, meta interface{}) (*terraform.InstanceState, error) {
@@ -31,7 +31,7 @@ func migrateGithubWebhookStateV0toV1(is *terraform.InstanceState) (*terraform.In
 	delete(is.Attributes, prefix+"%")
 
 	// Read & delete old keys
-	oldKeys := make(map[string]string, 0)
+	oldKeys := make(map[string]string)
 	for k, v := range is.Attributes {
 		if strings.HasPrefix(k, prefix) {
 			oldKeys[k] = v

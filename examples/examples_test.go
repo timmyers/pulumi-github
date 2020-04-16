@@ -11,50 +11,52 @@ import (
 	"github.com/pulumi/pulumi/pkg/v2/testing/integration"
 )
 
-func TestAccAwsElastiGroupTs(t *testing.T) {
+func TestGithubRepoTs(t *testing.T) {
 	getToken(t)
 	test := getJSBaseOptions(t).
 		With(integration.ProgramTestOptions{
-			Dir: path.Join(getCwd(t), "aws_elastigroup", "ts"),
+			Dir: path.Join(getCwd(t), "github_repo", "ts"),
 		})
 
 	integration.ProgramTest(t, &test)
 }
 
-func TestAccAwsElastiGroupPython(t *testing.T) {
+func TestGithubRepoPython(t *testing.T) {
 	getToken(t)
 	test := getPythonBaseOptions(t).
 		With(integration.ProgramTestOptions{
-			Dir: path.Join(getCwd(t), "aws_elastigroup", "python"),
+			Dir: path.Join(getCwd(t), "github_repo", "python"),
 		})
 
 	integration.ProgramTest(t, &test)
 }
 
-func TestAccAwsElastiGroupCsharp(t *testing.T) {
+func TestGithubRepoCsharp(t *testing.T) {
 	getToken(t)
 	test := getCsharpBaseOptions(t).
 		With(integration.ProgramTestOptions{
-			Dir: path.Join(getCwd(t), "aws_elastigroup", "csharp"),
+			Dir: path.Join(getCwd(t), "github_repo", "csharp"),
 		})
 
 	integration.ProgramTest(t, &test)
 }
 
-func getToken(t *testing.T) {
-	token := os.Getenv("SPOTINST_TOKEN")
+func getToken(t *testing.T) string {
+	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
-		t.Skipf("Skipping test due to missing SPOTINST_TOKEN environment variable")
+		t.Skipf("Skipping test due to missing GITHUB_TOKEN environment variable")
 	}
+
+	return token
 }
 
-func getEnvRegion(t *testing.T) string {
-	envRegion := os.Getenv("AWS_REGION")
-	if envRegion == "" {
-		t.Skipf("Skipping test due to missing AWS_REGION environment variable")
+func getOrganization(t *testing.T) string {
+	organization := os.Getenv("GITHUB_ORGANIZATION")
+	if organization == "" {
+		t.Skipf("Skipping test due to missing GITHUB_ORGANIZATION environment variable")
 	}
 
-	return envRegion
+	return organization
 }
 
 func getCwd(t *testing.T) string {
@@ -70,7 +72,8 @@ func getBaseOptions(t *testing.T) integration.ProgramTestOptions {
 	return integration.ProgramTestOptions{
 		ExpectRefreshChanges: true,
 		Config: map[string]string{
-			"aws:region": getEnvRegion(t),
+			"github:token":        getToken(t),
+			"github:organization": getOrganization(t),
 		},
 	}
 }

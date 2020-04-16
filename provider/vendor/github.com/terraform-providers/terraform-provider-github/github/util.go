@@ -2,15 +2,30 @@ package github
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 const (
 	// https://developer.github.com/guides/traversing-with-pagination/#basics-of-pagination
 	maxPerPage = 100
 )
+
+func checkOrganization(meta interface{}) error {
+	if meta.(*Organization).name == "" {
+		return fmt.Errorf("This resource requires GitHub organization to be set on the provider.")
+	}
+
+	return nil
+}
+
+func caseInsensitive() schema.SchemaDiffSuppressFunc {
+	return func(k, old, new string, d *schema.ResourceData) bool {
+		return strings.EqualFold(old, new)
+	}
+}
 
 func validateValueFunc(values []string) schema.SchemaValidateFunc {
 	return func(v interface{}, k string) (we []string, errors []error) {
@@ -30,11 +45,11 @@ func validateValueFunc(values []string) schema.SchemaValidateFunc {
 	}
 }
 
-// return the pieces of id `a:b` as a, b
-func parseTwoPartID(id string) (string, string, error) {
+// return the pieces of id `left:right` as left, right
+func parseTwoPartID(id, left, right string) (string, string, error) {
 	parts := strings.SplitN(id, ":", 2)
 	if len(parts) != 2 {
-		return "", "", fmt.Errorf("Unexpected ID format (%q). Expected organization:name", id)
+		return "", "", fmt.Errorf("Unexpected ID format (%q). Expected %s:%s", id, left, right)
 	}
 
 	return parts[0], parts[1], nil
@@ -76,4 +91,22 @@ type unconvertibleIdError struct {
 func (e *unconvertibleIdError) Error() string {
 	return fmt.Sprintf("Unexpected ID format (%q), expected numerical ID. %s",
 		e.OriginalId, e.OriginalError.Error())
+}
+
+func validateTeamIDFunc(v interface{}, keyName string) (we []string, errors []error) {
+	teamIDString, ok := v.(string)
+	if !ok {
+		return nil, []error{fmt.Errorf("expected type of %s to be string", keyName)}
+	}
+	// Check that the team ID can be converted to an int
+	if _, err := strconv.ParseInt(teamIDString, 10, 64); err != nil {
+		return nil, []error{unconvertibleIdErr(teamIDString, err)}
+	}
+
+	return
+}
+
+func splitRepoFilePath(path string) (string, string) {
+	parts := strings.Split(path, "/")
+	return parts[0], strings.Join(parts[1:], "/")
 }

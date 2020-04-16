@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/google/go-github/github"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/google/go-github/v29/github"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func resourceGithubMembership() *schema.Resource {
@@ -21,9 +21,10 @@ func resourceGithubMembership() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"username": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: caseInsensitive(),
 			},
 			"role": {
 				Type:         schema.TypeString,
@@ -40,6 +41,11 @@ func resourceGithubMembership() *schema.Resource {
 }
 
 func resourceGithubMembershipCreateOrUpdate(d *schema.ResourceData, meta interface{}) error {
+	err := checkOrganization(meta)
+	if err != nil {
+		return err
+	}
+
 	client := meta.(*Organization).client
 
 	orgName := meta.(*Organization).name
@@ -68,10 +74,15 @@ func resourceGithubMembershipCreateOrUpdate(d *schema.ResourceData, meta interfa
 }
 
 func resourceGithubMembershipRead(d *schema.ResourceData, meta interface{}) error {
+	err := checkOrganization(meta)
+	if err != nil {
+		return err
+	}
+
 	client := meta.(*Organization).client
 
 	orgName := meta.(*Organization).name
-	_, username, err := parseTwoPartID(d.Id())
+	_, username, err := parseTwoPartID(d.Id(), "organization", "username")
 	if err != nil {
 		return err
 	}
@@ -106,12 +117,17 @@ func resourceGithubMembershipRead(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourceGithubMembershipDelete(d *schema.ResourceData, meta interface{}) error {
+	err := checkOrganization(meta)
+	if err != nil {
+		return err
+	}
+
 	client := meta.(*Organization).client
 	orgName := meta.(*Organization).name
 	ctx := context.WithValue(context.Background(), ctxId, d.Id())
 
 	log.Printf("[DEBUG] Deleting membership: %s", d.Id())
-	_, err := client.Organizations.RemoveOrgMembership(ctx,
+	_, err = client.Organizations.RemoveOrgMembership(ctx,
 		d.Get("username").(string), orgName)
 
 	return err

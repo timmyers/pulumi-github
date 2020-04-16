@@ -5,10 +5,9 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
-	"github.com/google/go-github/github"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/google/go-github/v29/github"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func resourceGithubTeamMembership() *schema.Resource {
@@ -24,14 +23,16 @@ func resourceGithubTeamMembership() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"team_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validateTeamIDFunc,
 			},
 			"username": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: caseInsensitive(),
 			},
 			"role": {
 				Type:         schema.TypeString,
@@ -61,10 +62,10 @@ func resourceGithubTeamMembershipCreateOrUpdate(d *schema.ResourceData, meta int
 	role := d.Get("role").(string)
 
 	log.Printf("[DEBUG] Creating team membership: %s/%s (%s)", teamIdString, username, role)
-	_, _, err = client.Organizations.AddTeamMembership(ctx,
+	_, _, err = client.Teams.AddTeamMembership(ctx,
 		teamId,
 		username,
-		&github.OrganizationAddTeamMembershipOptions{
+		&github.TeamAddTeamMembershipOptions{
 			Role: role,
 		},
 	)
@@ -79,7 +80,7 @@ func resourceGithubTeamMembershipCreateOrUpdate(d *schema.ResourceData, meta int
 
 func resourceGithubTeamMembershipRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Organization).client
-	teamIdString, username, err := parseTwoPartID(d.Id())
+	teamIdString, username, err := parseTwoPartID(d.Id(), "team_id", "username")
 	if err != nil {
 		return err
 	}
@@ -88,13 +89,20 @@ func resourceGithubTeamMembershipRead(d *schema.ResourceData, meta interface{}) 
 	if err != nil {
 		return unconvertibleIdErr(teamIdString, err)
 	}
+
+	// We intentionally set these early to allow reconciliation
+	// from an upstream bug which emptied team_id in state
+	// See https://github.com/terraform-providers/terraform-provider-github/issues/323
+	d.Set("team_id", teamIdString)
+	d.Set("username", username)
+
 	ctx := context.WithValue(context.Background(), ctxId, d.Id())
 	if !d.IsNewResource() {
 		ctx = context.WithValue(ctx, ctxEtag, d.Get("etag").(string))
 	}
 
 	log.Printf("[DEBUG] Reading team membership: %s/%s", teamIdString, username)
-	membership, resp, err := client.Organizations.GetTeamMembership(ctx,
+	membership, resp, err := client.Teams.GetTeamMembership(ctx,
 		teamId, username)
 	if err != nil {
 		if ghErr, ok := err.(*github.ErrorResponse); ok {
@@ -111,12 +119,8 @@ func resourceGithubTeamMembershipRead(d *schema.ResourceData, meta interface{}) 
 		return err
 	}
 
-	team, user := getTeamAndUserFromURL(membership.URL)
-
 	d.Set("etag", resp.Header.Get("ETag"))
-	d.Set("username", user)
 	d.Set("role", membership.Role)
-	d.Set("team_id", team)
 
 	return nil
 }
@@ -133,22 +137,7 @@ func resourceGithubTeamMembershipDelete(d *schema.ResourceData, meta interface{}
 	ctx := context.WithValue(context.Background(), ctxId, d.Id())
 
 	log.Printf("[DEBUG] Deleting team membership: %s/%s", teamIdString, username)
-	_, err = client.Organizations.RemoveTeamMembership(ctx, teamId, username)
+	_, err = client.Teams.RemoveTeamMembership(ctx, teamId, username)
 
 	return err
-}
-
-func getTeamAndUserFromURL(url *string) (string, string) {
-	var team, user string
-
-	urlSlice := strings.Split(*url, "/")
-	for v := range urlSlice {
-		if urlSlice[v] == "teams" {
-			team = urlSlice[v+1]
-		}
-		if urlSlice[v] == "memberships" {
-			user = urlSlice[v+1]
-		}
-	}
-	return team, user
 }

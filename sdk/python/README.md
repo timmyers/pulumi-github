@@ -35,8 +35,9 @@ To use from Go, use `go get` to grab the latest version of the library
 
 The following configuration points are available for the `github` provider:
 
-- `github:account` (environment: `SPOTINST_ACCOUNT`) - the account for `github`
-- `github:token` (environment: `SPOTINST_TOKEN`) - the api token for `github`
+- `github:token` (environment: `GITHUB_TOKEN`) - the account for `github`
+- `github:organization` (environment: `GITHUB_ORGANIZATION`) - the api token for `github`
+- `github:base_url` (environment: `GITHUB_BASE_URL`) - the api token for `github`
 
 ## Reference
 

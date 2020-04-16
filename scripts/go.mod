@@ -1,6 +1,6 @@
-module github.com/timmyers/pulumi-github/scripts/v2
+module github.com/timmyers/pulumi-github/scripts
 
-go 1.13
+go 1.14
 
 require (
 	github.com/pulumi/pulumi/sdk/v2 v2.0.0-beta.3
