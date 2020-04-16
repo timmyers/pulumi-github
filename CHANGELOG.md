@@ -2,7 +2,9 @@ CHANGELOG
 =========
 
 ## HEAD (Unreleased)
-* Add prepare command to rename the `xyz` occurrences
+_(none)_
 
 ---
 
+## 1.0.0 (2019-12-10)
+* Initial release of the provider
