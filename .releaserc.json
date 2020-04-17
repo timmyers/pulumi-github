@@ -1,8 +1,11 @@
 {
-  "branches": "master",
+  "branches": "semantic-release",
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
+    ["@semantic-release/exec", {
+      "prepareCmd": "VERSION=${nextRelease.version} make build_node"
+    }],
     ["@semantic-release/github", {
       "released": ["published"]
     }]
