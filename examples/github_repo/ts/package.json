@@ -9,6 +9,6 @@
         "@pulumi/random": "^1.3.0"
     },
     "peerDependencies": {
-        "@pulumi/github": "dev"
+        "@timmyers/pulumi-github": "dev"
     }
 }

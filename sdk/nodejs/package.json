@@ -1,5 +1,5 @@
 {
-    "name": "@pulumi/github",
+    "name": "@timmyers/pulumi-github",
     "version": "${VERSION}",
     "description": "A Pulumi package for creating and managing github cloud resources.",
     "keywords": [
