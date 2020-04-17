@@ -4,7 +4,8 @@
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
     ["@semantic-release/exec", {
-      "prepareCmd": "VERSION=${nextRelease.version} make build_node"
+      "prepareCmd": "VERSION=${nextRelease.version} make build_node",
+      "publishCmd": "VERSION=${nextRelease.version} make publish_node"
     }],
     ["@semantic-release/github", {
       "released": ["published"]

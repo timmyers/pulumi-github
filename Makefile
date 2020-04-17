@@ -10,7 +10,7 @@ TF_NAME          := ${PACK}
 
 TFGEN           := pulumi-tfgen-${PACK}
 PROVIDER        := pulumi-resource-${PACK}
-VERSION         := $(shell scripts/get-version)
+VERSION         ?= $(shell scripts/get-version)
 PYPI_VERSION    := $(shell scripts/get-py-version || (echo "could not get version $$?"; exit 1))
 
 DOTNET_PREFIX  := $(firstword $(subst -, ,${VERSION:v%=%})) # e.g. 1.5.0
@@ -36,6 +36,9 @@ build_node:: tfgen provider
         yarn run tsc && \
         sed -i.bak -e "s/\$${VERSION}/$(VERSION)/g" -e "s/\$${PLUGIN_VERSION}/$(VERSION)/g" ./package.json && \
         cp ../../README.md ../../LICENSE package.json yarn.lock ./bin/
+
+publish_node:: build_node
+	yarn --cwd sdk/nodejs/bin publish --access public
 
 build_python:: tfgen provider
 	cd provider && ./bin/$(TFGEN) python --overlays overlays/python --out ../${PACKDIR}/python/
