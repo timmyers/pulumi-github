@@ -1,5 +1,8 @@
-name: release
+name: Build and Release
 on:
+  pull_request:
+    branches:
+      - master
   push:
     tags: [ "v*" ]
 
@@ -17,11 +20,12 @@ jobs:
           tf2pulumi-version: 0.6.0
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Unshallow
+      - name: Unshallow clone
         run: git fetch --prune --unshallow
-      - uses: actions/setup-go@v2
+      - name: Install Go 1.14.1
+        uses: actions/setup-go@v2
         with:
-          go-version: '^1.13.1' 
+          go-version: '1.14.1'
       - name: Ensure dependencies
         run: make ensure
       - name: Generate provider deps
@@ -34,6 +38,7 @@ jobs:
       - name: Build SDK
         run: make build_node
       - name: Publish to NPM
+        if: startsWith(github.event.push.tags, 'v')
         run: yarn --cwd sdk/nodejs/bin publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
@@ -47,11 +52,12 @@ jobs:
           tf2pulumi-version: 0.6.0
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Unshallow
+      - name: Unshallow clone
         run: git fetch --prune --unshallow
-      - uses: actions/setup-go@v2
+      - name: Install Go 1.14.1
+        uses: actions/setup-go@v2
         with:
-          go-version: '^1.13.1'
+          go-version: '1.14.1'
       - name: Ensure dependencies
         run: make ensure
       - name: Generate provider deps
@@ -63,6 +69,7 @@ jobs:
       - name: Build SDK
         run: make build_python
       - name: Publish package
+        if: startsWith(github.event.push.tags, 'v')
         uses: pypa/gh-action-pypi-publish@master
         with:
           user: __token__
@@ -78,11 +85,12 @@ jobs:
           tf2pulumi-version: 0.6.0
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Unshallow
+      - name: Unshallow clone
         run: git fetch --prune --unshallow
-      - uses: actions/setup-go@v2
+      - name: Install Go 1.14.1
+        uses: actions/setup-go@v2
         with:
-          go-version: '^1.13.1'
+          go-version: '1.14.1'
       - name: Ensure dependencies
         run: make ensure
       - name: Generate provider deps
@@ -94,6 +102,7 @@ jobs:
       - name: Build SDK
         run: make build_dotnet
       - name: Publish nuget
+        if: startsWith(github.event.push.tags, 'v')
         run: find "sdk/dotnet/bin/Debug" -name 'Pulumi.*.nupkg' -exec dotnet nuget push -k ${NUGET_TOKEN} -s https://api.nuget.org/v3/index.json {} ';'
   provider:
     runs-on: ubuntu-latest
@@ -104,20 +113,27 @@ jobs:
           tf2pulumi-version: 0.6.0
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Unshallow
+      - name: Unshallow clone
         run: git fetch --prune --unshallow
-      - uses: actions/setup-go@v2
+      - name: Install Go 1.14.1
+        uses: actions/setup-go@v2
         with:
-          go-version: '^1.13.1'
+          go-version: '1.14.1'
       - name: Ensure dependencies
         run: make ensure
       - name: Generate provider deps
         run: make provider
-      - name: Run GoReleaser
+      - if: github.event_name == 'pull_request'
+        name: Goreleaser snapshot
         uses: goreleaser/goreleaser-action@v1
         with:
           version: v0.129.0
-          args: release --rm-dist
+          args: release --rm-dist --snapshot
+      - if: startsWith(github.event.push.tags, 'v')
+        name: Goreleaser publish
+        uses: goreleaser/goreleaser-action@v1
+        with:
+          version: v0.129.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

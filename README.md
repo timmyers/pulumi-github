@@ -1,4 +1,6 @@
-[![Build Status](https://travis-ci.com/timmyers/pulumi-github.svg?branch=master)](https://travis-ci.com/timmyers/pulumi-github)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/timmyers/pulumi-github/release)
+![npm](https://img.shields.io/npm/v/@timmyers/pulumi-github)
+![PyPI](https://img.shields.io/pypi/v/pulumi-github)
 
 # GitHub Resource Provider
 
