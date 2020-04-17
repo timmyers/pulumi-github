@@ -32,9 +32,9 @@ build:: tfgen provider build_node build_python build_go build_dotnet
 build_node:: tfgen provider
 	cd provider && ./bin/$(TFGEN) nodejs --overlays overlays/nodejs --out ../${PACKDIR}/nodejs/
 	cd ${PACKDIR}/nodejs/ && \
-        sed -i.bak -e "s/\$${VERSION}/$(VERSION)/g" -e "s/\$${PLUGIN_VERSION}/$(VERSION)/g" ./bin/package.json && \
         yarn install && \
         yarn run tsc && \
+        sed -i.bak -e "s/\$${VERSION}/$(VERSION)/g" -e "s/\$${PLUGIN_VERSION}/$(VERSION)/g" ./bin/package.json && \
         cp ../../README.md ../../LICENSE package.json yarn.lock ./bin/
 
 build_python:: tfgen provider
