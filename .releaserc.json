@@ -4,12 +4,10 @@
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
     ["@semantic-release/exec", {
-      "prepareCmd": "VERSION=${nextRelease.version} make provider",
-      "publishCmd": "VERSION=${nextRelease.version} make publish_provider"
+      "publishCmd": "VERSION=${nextRelease.version} make build_provider"
     }],
     ["@semantic-release/exec", {
-      "prepareCmd": "VERSION=${nextRelease.version} make build_node",
-      "publishCmd": "VERSION=${nextRelease.version} make publish_node"
+      "publishCmd": "VERSION=${nextRelease.version} make build_node && make publish_node"
     }],
     ["@semantic-release/github", {
       "released": ["published"]

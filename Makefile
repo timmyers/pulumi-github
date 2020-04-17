@@ -34,11 +34,11 @@ build_node:: tfgen provider
 	cd ${PACKDIR}/nodejs/ && \
         yarn install && \
         yarn run tsc && \
-        sed -i.bak -e "s/\$${VERSION}/$(VERSION)/g" -e "s/\$${PLUGIN_VERSION}/$(VERSION)/g" ./package.json && \
+        sed -e "s/\$${VERSION}/$(VERSION)/g" -e "s/\$${PLUGIN_VERSION}/$(VERSION)/g" ./package.json && \
         cp ../../README.md ../../LICENSE package.json yarn.lock ./bin/
 
 publish_node:: build_node
-	yarn --cwd sdk/nodejs/bin publish --access public
+	yarn --cwd sdk/nodejs/bin publish --access public && git clean -fd
 
 build_python:: tfgen provider
 	cd provider && ./bin/$(TFGEN) python --overlays overlays/python --out ../${PACKDIR}/python/
@@ -67,6 +67,9 @@ generate_schema:: tfgen
 provider:: generate_schema
 	cd provider && go generate ${PROJECT}/provider/cmd/${PROVIDER}
 	cd provider && go install -ldflags "-X github.com/${ORG}/pulumi-${PACK}/provider/pkg/version.Version=${VERSION}" ${PROJECT}/provider/cmd/${PROVIDER}
+
+build_provider:: provider
+	goreleaser release
 
 publish_provider:: provider
 

@@ -25,6 +25,11 @@ jobs:
         uses: pulumi/action-install-tf2pulumi@releases/v1
         with:
           tf2pulumi-version: 0.6.0
+      - name: Install goreleaser
+        uses: goreleaser/goreleaser-action@v1
+        with:
+          version: latest
+          args: --version
       - name: Ensure dependencies
         run: make ensure
       - name: Semantic release

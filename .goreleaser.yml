@@ -4,6 +4,8 @@ env:
   - GO111MODULE=on
 before:
   hooks:
+release:
+  disable: true
 builds:
 - env:
   - CGO_ENABLED=0
@@ -20,6 +22,6 @@ builds:
 snapshot:
   name_template: "{{ .Tag }}-SNAPSHOT"
 archives:
-  - name_template: "{{ .Binary }}-}}-{{ .Os }}-{{ .Arch }}"
+  - name_template: "{{ .Binary }}-v{{ .Tag }}-{{ .Os }}-{{ .Arch }}"
     files: [] # Empty
 
