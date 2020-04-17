@@ -27,8 +27,6 @@ jobs:
           tf2pulumi-version: 0.6.0
       - name: Ensure dependencies
         run: make ensure
-      - name: Generate provider deps
-        run: make provider
       - name: Semantic release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -11,5 +11,6 @@ sdk/nodejs/node_modules
 *.iml
 
 yarn.lock
+.npmrc
 
 .env
