@@ -34,7 +34,7 @@ build_node:: tfgen provider
 	cd ${PACKDIR}/nodejs/ && \
         yarn install && \
         yarn run tsc && \
-        sed -e "s/\$${VERSION}/$(VERSION)/g" -e "s/\$${PLUGIN_VERSION}/$(VERSION)/g" ./package.json && \
+        sed -i.bak -e "s/\$${VERSION}/$(VERSION)/g" -e "s/\$${PLUGIN_VERSION}/$(VERSION)/g" ./package.json && rm package.json.bak && \
         cp ../../README.md ../../LICENSE package.json yarn.lock ./bin/
 
 publish_node:: build_node

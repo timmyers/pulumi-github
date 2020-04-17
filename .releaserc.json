@@ -7,10 +7,15 @@
       "publishCmd": "VERSION=${nextRelease.version} make build_provider"
     }],
     ["@semantic-release/exec", {
-      "publishCmd": "VERSION=${nextRelease.version} make build_node && make publish_node"
+      "publishCmd": "VERSION=${nextRelease.version} make build_node && VERSION=${nextRelease.version} make publish_node"
     }],
     ["@semantic-release/github", {
-      "released": ["published"]
+      "released": ["published"],
+      "assets": [
+        {"path": "dist/pulumi-resource-github-v${nextRelease.version}-darwin-amd64.tar.gz"},
+        {"path": "dist/pulumi-resource-github-v${nextRelease.version}-linux-amd64.tar.gz"},
+        {"path": "dist/pulumi-resource-github-v${nextRelease.version}-windows-amd64.tar.gz"}
+      ]
     }]
   ]
 }
